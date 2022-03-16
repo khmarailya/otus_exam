@@ -12,11 +12,12 @@ services:
             - "4444:4444"
         volumes:
             - "/opt/selenoid/:/etc/selenoid/"
-            - "/var/run/docker.sock:/var/run/docker.sock"
             - "/opt/selenoid/logs:/opt/selenoid/logs"
             - "/opt/selenoid/video:/opt/selenoid/video"
+            - "/opt/selenoid/browsers.json:/etc/selenoid/browsers.json"
+            - "/var/run/docker.sock:/var/run/docker.sock"
         environment:
-            - OVERRIDE_VIDEO_OUTPUT_DIR=/path/to/config/video
+            - OVERRIDE_VIDEO_OUTPUT_DIR=/opt/selenoid/video
         command: -limit 16
                  -timeout 3m
                  -session-delete-timeout 3m
