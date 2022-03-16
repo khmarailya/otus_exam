@@ -3,13 +3,13 @@
     "default": "66.0",
     "versions": {
       "66.0": {
-        "image": "v00rpm-dr.corp.tander.ru/dockerhub/selenoid-firefox:66.0",
+        "image": "selenoid-firefox:66.0",
         "port": "4444",
         "shmSize" : 268435456
 
       },
       "vns-66.0": {
-        "image": "v00rpm-dr.corp.tander.ru/dockerhub/selenoid-vns:firefox_66.0",
+        "image": "selenoid-vns:firefox_66.0",
         "port": "4444",
         "shmSize" : 268435456
       }
@@ -19,12 +19,12 @@
     "default": "86.0",
     "versions": {
       "86.0": {
-        "image": "dockerhub.repo.corp.tander.ru/selenoid/chrome:86.0",
+        "image": "selenoid/chrome:86.0",
         "port": "4444",
         "shmSize" : 268435456
       },
       "vns-86.0": {
-        "image": "dockerhub.repo.corp.tander.ru/selenoid/vnc_chrome:86.0",
+        "image": "selenoid/vnc_chrome:86.0",
         "port": "4444",
         "shmSize" : 268435456
       }

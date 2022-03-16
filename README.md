@@ -17,6 +17,6 @@ http://localhost:8080/
 
     cd /opt/otus_exam
     git pull
-    cp -rf otus_exam/setup/selenoid/ selenoid
+    cp -RT /opt/otus_exam/setup/selenoid/ /opt/selenoid/
     cd /opt/selenoid
     docker-compose up -d
