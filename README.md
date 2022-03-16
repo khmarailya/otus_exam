@@ -4,6 +4,11 @@
 
 Установить docker, docker-compose
 
+_Узнать ip докера_
+
+    apt install net-tools
+    ifconfig
+
 __Стянуть проект__
 
     cd /opt
@@ -14,29 +19,27 @@ __Стянуть проект__
     cd /opt/otus_exam
     git pull
     
-__Поднять Селеноид__
+__Поднять отдельно Селеноид__
 
 _Скопировать_
 
     cp -RT /opt/otus_exam/setup/selenoid/ /opt/selenoid/
     cd /opt/selenoid
     
-_Стянуть нужные [образы браузеров](https://aerokube.com/images/latest/#_selenium)_   
+Стянуть нужные [образы браузеров](https://aerokube.com/images/latest/#_selenium) и запустить
  
     docker pull selenoid/chrome:86.0
     ...
-    
-_Запустить_
-    
     docker-compose up -d
-http://localhost:8080/
+    
+- Адрес: http://localhost:8080
+- Сессия автотеста: http://localhost:4444/wd/hub
 
-
-__Поднять Opencart__
-
-_Скопировать_
+__Поднять отдельно [Opencart](https://hub.docker.com/r/bitnami/opencart/)__
 
     cp -RT /opt/otus_exam/setup/opencart/ /opt/opencart/
-    cd /opt/selenoid
+    cd /opt/opencart
     docker-compose up -d
-http://localhost    
+
+- Адрес: http://localhost  
+- Админка: http://localhost/admin: Логин/пароль - user/bitnami  
