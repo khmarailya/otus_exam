@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+
+    selenoid:
+#        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid:latest"
+        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid:1.10.5"
+        container_name: selenoid
+        network_mode: bridge
+        restart: always
+        ports:
+            - "4444:4444"
+        volumes:
+            - "/opt/selenoid/:/etc/selenoid/"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            - "/opt/selenoid/logs:/opt/selenoid/logs"
+            - "/opt/selenoid/video:/opt/selenoid/video"
+        environment:
+            - OVERRIDE_VIDEO_OUTPUT_DIR=/path/to/config/video
+        command: -limit 16
+                 -timeout 3m
+                 -session-delete-timeout 3m
+                 -session-attempt-timeout 3m
+                 -service-startup-timeout 3m
+                 -conf /etc/selenoid/browsers.json
+                 -video-output-dir /opt/selenoid/video
+                 -log-output-dir /opt/selenoid/logs
+
+    selenoid-ui:
+        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid-ui:1.10.4"
+        container_name: selenoid-ui
+        network_mode: bridge
+        restart: always
+        links:
+            - selenoid
+        ports:
+            - "8080:8080"
+        command: ["--selenoid-uri", "http://selenoid:4444"]
