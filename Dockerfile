@@ -3,6 +3,8 @@
 #     docker run --rm -v ${pwd}:/opt/features tag='regress' ID_MILESTONE=%ID_MILESTONE% krsua-service.repo.corp.tander.ru/service/cosmodrome:master
 
 FROM python:3.9.9
+USER root
+
 ENV BROWSER="chrome"
 ENV URL="http://172.17.0.1:8080/"
 ENV LOG_LEVEL="DEBUG"
@@ -22,6 +24,7 @@ RUN groupadd -g 8841 billy && \
     useradd -ms /bin/bash -u 8841 -g 8841 billy && \
     chown -R billy:billy $APP_DIR
 USER billy
+USER root
 
 CMD python3.9 -m pytest \
     -m $MARKS \
