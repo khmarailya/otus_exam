@@ -1,13 +1,78 @@
-version: '3'
+version: '3.9'
 
 services:
 
+    phpadmin:
+      image: 'phpmyadmin/phpmyadmin:latest'
+      environment:
+        - PMA_HOST=mariadb
+        - PMA_PORT=3306
+        - PMA_USER=bn_opencart
+      network_mode: bridge
+      ports:
+        - '8888:8090'
+
+    mariadb:
+      image: docker.io/bitnami/mariadb:10.3
+      environment:
+        # ALLOW_EMPTY_PASSWORD is recommended only for development.
+        - ALLOW_EMPTY_PASSWORD=yes
+        - MARIADB_USER=bn_opencart
+        - MARIADB_DATABASE=bitnami_opencart
+      volumes:
+        - 'mariadb_data:/bitnami/mariadb'
+      network_mode: bridge
+      ports:
+        - '3306:3306'
+#      networks:
+#        my-network:
+#          ipv4_address: 192.168.1.4
+
+    opencart:
+      image: docker.io/bitnami/opencart:3
+      network_mode: bridge
+      ports:
+        - '8080:8080'
+        - '443:8443'
+      environment:
+#        - OPENCART_HOST=localhost
+#        - OPENCART_EXTERNAL_HTTP_PORT_NUMBER=8080
+#        - OPENCART_EXTERNAL_HTTPS_PORT_NUMBER=443
+#        - APACHE_HTTP_PORT_NUMBER=8090
+#        - APACHE_HTTPS_PORT_NUMBER=443
+        - OPENCART_DATABASE_HOST=mariadb
+        - OPENCART_DATABASE_PORT_NUMBER=3306
+        - OPENCART_DATABASE_USER=bn_opencart
+        - OPENCART_DATABASE_NAME=bitnami_opencart
+        # ALLOW_EMPTY_PASSWORD is recommended only for development.
+        - ALLOW_EMPTY_PASSWORD=yes
+      volumes:
+        - 'opencart_data:/bitnami/opencart'
+        - 'opencart_storage_data:/bitnami/opencart_storage/'
+#        - './config.php:/opt/bitnami/opencart/config_.php'
+#        - './admin/config.php:/opt/bitnami/opencart/admin/config_.php'
+      depends_on:
+        - mariadb
+      links:
+        - mariadb
+#      command:
+#        - cp -f /opt/bitnami/opencart/config_.php /opt/bitnami/opencart/config.php
+#        - cp -f /opt/bitnami/opencart/admin/config_.php /opt/bitnami/opencart/admin/config.php
+
+#      networks:
+#        my-network:
+#          ipv4_address: 192.168.1.5
+
     selenoid:
 #        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid:latest"
-        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid:1.10.5"
+        image: aerokube/selenoid:latest
         container_name: selenoid
         network_mode: bridge
         restart: always
+        depends_on:
+          - opencart
+#        links:
+#          - opencart
         ports:
             - "4444:4444"
         volumes:
@@ -25,46 +90,40 @@ services:
                  -conf /etc/selenoid/browsers.json
                  -video-output-dir /opt/selenoid/video
                  -log-output-dir /opt/selenoid/logs
+#        networks:
+#          my-network:
+#            ipv4_address: 192.168.1.6
 
     selenoid-ui:
-        image: "dockerhub.repo.corp.tander.ru/aerokube/selenoid-ui:1.10.4"
+        image: aerokube/selenoid-ui
         container_name: selenoid-ui
         network_mode: bridge
         restart: always
         links:
             - selenoid
         ports:
-            - "8080:8080"
-        command: ["--selenoid-uri", "http://selenoid:4444"]
-
-    mariadb:
-        image: docker.io/bitnami/mariadb:10.3
-        environment:
-          # ALLOW_EMPTY_PASSWORD is recommended only for development.
-          - ALLOW_EMPTY_PASSWORD=yes
-          - MARIADB_USER=bn_opencart
-          - MARIADB_DATABASE=bitnami_opencart
-        volumes:
-          - 'mariadb_data:/bitnami/mariadb'
-
-    opencart:
-        image: docker.io/bitnami/opencart:3
-        ports:
-          - '80:8080'
-          - '443:8443'
-        environment:
-          - OPENCART_HOST=localhost
-          - OPENCART_DATABASE_HOST=mariadb
-          - OPENCART_DATABASE_PORT_NUMBER=3306
-          - OPENCART_DATABASE_USER=bn_opencart
-          - OPENCART_DATABASE_NAME=bitnami_opencart
-          # ALLOW_EMPTY_PASSWORD is recommended only for development.
-          - ALLOW_EMPTY_PASSWORD=yes
-        volumes:
-          - 'opencart_data:/bitnami/opencart'
-          - 'opencart_storage_data:/bitnami/opencart_storage/'
+            - "8090:8080"
         depends_on:
-          - mariadb
+            - selenoid
+#        networks:
+#          internals:
+#            ipv4_address: 172.36.40.3
+        command: ["--selenoid-uri", "http://selenoid:4444"]
+    jenkins:
+        image: jenkins/jenkins:lts
+        container_name: "jenkins"
+        privileged: true
+        user: root
+        network_mode: bridge
+        volumes:
+            - "jenkins_data:/var/jenkins_home"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+#        environment:
+#            JENKINS_HOST_HOME: "/home/sysadm/jenkins_home"
+        ports:
+            - 8088:8080
+            - 5000:5000
+            - 50000:50000
 
 volumes:
     mariadb_data:
@@ -73,3 +132,16 @@ volumes:
         driver: local
     opencart_storage_data:
         driver: local
+    jenkins_data:
+        driver: local
+
+#networks:
+#  internals:
+#    driver: bridge
+#    ipam:
+#      config:
+#        - subnet: 172.36.40.0/29
+#          gateway: 172.36.40.1
+#  my-network:
+#    external: true
+#    driver: bridge
