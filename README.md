@@ -8,6 +8,10 @@ _Узнать ip докера_
 
     apt install net-tools
     ifconfig
+    
+    
+    
+    docker network create -d bridge my-network
 
 __Стянуть проект__
 
@@ -43,3 +47,28 @@ __Поднять отдельно [Opencart](https://hub.docker.com/r/bitnami/op
 
 - Адрес: http://localhost  
 - Админка: http://localhost/admin: Логин/пароль - user/bitnami  
+
+
+__Поднять__
+    
+    cd /opt/selenoid_opencart
+    docker-compose down && docker-compose up -d
+
+__Редактировать config.php__
+_Проблема_ opencart по каким-то причинам не принимает указанный в параметрах OPENCART_HOST. 
+Пришлось применять "костыли": редактировать и подменять config.php и admin/config.php 
+(задать в yml как volume или копировать через command нельзя из-за внутренних особенностей образов)
+- для запуска из браузера 
+  - поменять для HTTP_SERVER и HTTP_CATALOG: localhost на localhost:8080
+  - поменять для HTTPS_SERVER и HTTPS_CATALOG: localhost на localhost:8080
+- для запуска из selenoid 
+  - _docker network inspect bridge_ 
+    - посмотреть ip сети "IPAM":"Config":"Gateway"  
+  - поменять для HTTP_SERVER: localhost на ip_сети:8080
+ 
+
+    cd /opt/selenoid_opencart
+    nano config.php
+    nano admin/config.php
+    docker cp config.php selenoid_opencart_opencart_1:/opt/bitnami/opencart/config.php
+    docker cp config_admin.php selenoid_opencart_opencart_1:/opt/bitnami/opencart/admin/config.php

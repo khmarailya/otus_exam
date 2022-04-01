@@ -10,3 +10,4 @@ parse
 flake8==4.0.1
 paramiko==2.8.1
 pylint==2.12.2
+pytest-bdd==5.0.0
