@@ -12,7 +12,7 @@ from libs.element.Footer import Footer
 from libs.element.Header import Header
 from libs.element.Menu import Menu
 from libs.element.Top import Top
-from libs.helpers import Str, XAllure
+from libs.xallure import Str, XAllure
 
 CURRENT_PAGE: tuple[Optional[str], Optional[WebDriver]] = (None, None)
 

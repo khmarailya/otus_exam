@@ -1,9 +1,7 @@
-import inspect
 import logging
-from typing import Optional, List, Iterable, Union
+from typing import Optional, List, Union
 
 import allure
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.android.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
@@ -11,66 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from conftest import CONFIG
 from libs.Wait import Wait
-from libs.helpers import Str, XAllure
-
-
-def screen_step(step_definition: str, exceptions: Iterable[type] = None):
-    def decorator(action):
-    #     args_names = inspect.signature(action).parameters.keys()
-    #
-    #     def wrapper(self: 'BasePage', *args, **kwargs):
-    #         err = None
-    #         step_definition_ = step_definition
-    #         for arg, val in tuple(zip(args_names, (self, ) + args)) + tuple(kwargs.items()):
-    #             key = '{' + arg + '}'
-    #             if key in step_definition:
-    #                 step_definition_ = step_definition_.replace(key, str(val))
-    #
-    #         with allure.step(step_definition_):
-    #             try:
-    #                 return action(self, *args, **kwargs)
-    #             except Exception as e:
-    #                 err = e
-    #                 if exceptions and isinstance(e, tuple(exceptions)):
-    #                     raise AssertionError(e)
-    #                 else:
-    #                     raise
-    #             finally:
-    #                 if err or CONFIG.ALWAYS_SCREEN:
-    #                     driver = self._driver
-    #                     allure.attach(
-    #                         body=driver.get_screenshot_as_png(),
-    #                         name="screenshot_image",
-    #                         attachment_type=allure.attachment_type.PNG)
-    #
-    #     return wrapper
-        return action
-
-    return decorator
-
-
-# class wait_exception:
-#
-#     @classmethod
-#     def Timeout(cls, msg: str):
-#         def decorator(action):
-#             args_names = inspect.signature(action).parameters.keys()
-#
-#             def wrapper(*args, **kwargs):
-#                 try:
-#                     return action(*args, **kwargs)
-#                 except TimeoutException:
-#                     msg_ = msg
-#                     for arg, val in tuple(zip(args_names, args)) + tuple(kwargs.items()):
-#                         key = '{' + arg + '}'
-#                         if key in msg:
-#                             msg_ = msg_.replace(key, str(val))
-#
-#                     raise AssertionError(msg_)
-#
-#             return wrapper
-#
-#         return decorator
+from libs.xallure import Str, XAllure
 
 
 class BasePage(CONFIG.WithBrowser):
@@ -153,12 +92,10 @@ class BasePage(CONFIG.WithBrowser):
         self.scroll_in_view(els[0])
         return els
 
-    @screen_step('[{self}] Clicking element')
     def _click_element(self, element):
         self.logger.info(f'{self} => Clicking element')
         ActionChains(self._driver).pause(0.3).move_to_element(element).click().perform()
 
-    @screen_step('[{self}] Typing "{val}"')
     def _send_keys(self, element: WebElement, val: str):
         self.logger.info(f'{self} => Typing {val}')
         element.send_keys(val)
