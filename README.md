@@ -30,10 +30,11 @@ _Скопировать_
     cp -RT /opt/otus_exam/setup/selenoid/ /opt/selenoid/
     cd /opt/selenoid
     
-Стянуть нужные [образы браузеров](https://aerokube.com/images/latest/#_selenium) и запустить
+Стянуть нужные [образы браузеров](https://aerokube.com/images/latest/#_selenium), видеорекордер, и запустить
  
     docker pull selenoid/chrome:86.0
     ...
+    docker pull selenoid/video-recorder:latest-release
     docker-compose up -d
     
 - Адрес: http://localhost:8080

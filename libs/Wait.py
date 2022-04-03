@@ -7,17 +7,17 @@ class Wait(WebDriverWait):
     def __init__(self, driver, timeout=2, frequency=1):
         super().__init__(driver, timeout, poll_frequency=frequency)
 
+    def until(self, method, message=''):
+        try:
+            return super().until(method, message=message)
+        except Exception as e:
+            raise AssertionError('Waiting is failed') from e
 
-class url_get(object):
-    """An expectation for checking the current url.
-    url is the expected url, which must be an exact match
-    returns True if the url matches, false otherwise."""
-    def __init__(self, url):
-        self.url = url
-
-    def __call__(self, driver):
-        driver.get(self.url)
-        return self.url == driver.current_url
+    def until_not(self, method, message=''):
+        try:
+            return super().until_not(method, message=message)
+        except Exception as e:
+            raise AssertionError('Waiting is failed') from e
 
 
 if __name__ == '__main__':

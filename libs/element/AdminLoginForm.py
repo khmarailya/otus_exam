@@ -1,29 +1,42 @@
 import allure
 
 from libs.locators import XPATH, CSS
-from libs.page_object.BasePage import BasePage, screen_step
+from libs.page_object.BasePage import BasePage, BasePageElement
+from libs.xallure import XAllure
 
 
 class AdminLoginForm(BasePage):
-    SELF = CSS().body.descendant.id('content').res
-    USER_LABEL = XPATH().label.for_('input-username').res
-    USER_INPUT = XPATH().input.name('username').res
-    PASSWORD_LABEL = XPATH().label.for_('input-password').res
-    PASSWORD_INPUT = XPATH().input.name('password').res
-    SUBMIT = XPATH().button.type('submit').res
+    SELF = BasePageElement(
+        CSS().body.descendant.id('content').res)
+    USER_LABEL = BasePageElement(
+        XPATH().label.for_('input-username').res)
+    USER_INPUT = BasePageElement(
+        XPATH().input.name('username').res)
+    PASSWORD_LABEL = BasePageElement(
+        XPATH().label.for_('input-password').res)
+    PASSWORD_INPUT = BasePageElement(
+        XPATH().input.name('password').res)
+    SUBMIT = BasePageElement(
+        XPATH().button.type('submit').res)
+    ALERT = BasePageElement(
+        CSS().div.classes('alert').res)
 
-    @screen_step('Login as "{user}" by "{password}"')
     def login(self, user, password):
         with allure.step(f'Find user input and type "{user}"'):
-            self.verify_visible_element(self.USER_LABEL)
-            input_ = self.verify_visible_element(self.USER_INPUT)
+            self.USER_LABEL()
+            input_ = self.USER_INPUT()
             input_.clear()
             self._send_keys(input_, user)
         with allure.step(f'Find password input and type "{password}"'):
-            self.verify_visible_element(self.PASSWORD_LABEL)
-            input_ = self.verify_visible_element(self.PASSWORD_INPUT)
+            self.PASSWORD_LABEL()
+            input_ = self.PASSWORD_INPUT()
             input_.clear()
             self._send_keys(input_, password)
 
         with allure.step('Submit'):
-            self.verify_visible_element(self.SUBMIT).click()
+            self.SUBMIT().click()
+
+        self.re_ini()
+
+    def assert_alert_text(self, txt: str):
+        assert str(self.ALERT().text).startswith(txt), 'Incorrect Alert text'

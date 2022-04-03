@@ -1,7 +1,9 @@
 import logging
-from typing import Optional, List, Union
+import random
+from typing import Optional, List, Union, Callable
 
 import allure
+from multipledispatch import dispatch
 from selenium.webdriver.android.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
@@ -9,10 +11,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from conftest import CONFIG
 from libs.Wait import Wait
+from libs.browser import Browser
 from libs.xallure import Str, XAllure
 
 
-class BasePage(CONFIG.WithBrowser):
+class BasePage(Browser.WithBrowser):
     SELF: 'BasePageElement' = None
     __NAME__: str = None
 
@@ -56,12 +59,9 @@ class BasePage(CONFIG.WithBrowser):
         self.__cache__.clear()
 
     def _config_logger(self):
-        test_name = getattr(self._driver, CONFIG.KEY_TEST_NAME)
-        log_level = getattr(self._driver, CONFIG.KEY_LOG_LEVEL)
-
         self.logger = logging.getLogger(str(self))
-        self.logger.addHandler(logging.FileHandler(f"{test_name}.log"))
-        self.logger.setLevel(level=log_level)
+        self.logger.addHandler(logging.FileHandler(f"{CONFIG.__TEST_NAME__}.log"))
+        self.logger.setLevel(level=CONFIG.LOG_LEVEL())
 
     def __str__(self):
         res = self.__NAME__ + ' ' if self.__NAME__ else ''
@@ -83,6 +83,12 @@ class BasePage(CONFIG.WithBrowser):
         el = Wait(parent or self.driver or self._driver).until(EC.visibility_of_element_located(locator))
         self.scroll_in_view(el)
         return el
+
+    @XAllure.step_screen('I do not find Web element')
+    def verify_not_visible_element(self, locator: tuple, parent=None):
+        self.logger.info(f'{self} => Verifying visible element: {locator}')
+        self.attach_locator(locator)
+        Wait(parent or self.driver or self._driver, timeout=0, frequency=0).until(EC.invisibility_of_element_located(locator))
 
     @XAllure.step_screen('I find Web elements')
     def verify_visible_elements(self, locator: tuple, parent=None) -> List[WebElement]:
@@ -121,7 +127,8 @@ class BasePage(CONFIG.WithBrowser):
 class BasePageElement:
 
     def __init__(self, locator: tuple[str, str], *parents: Union[tuple[str, str], 'BasePageElement', object]):
-        self.result = self.base_page = None
+        self.result = None
+        self.base_page: Optional[BasePage] = None
         self.locator = locator
         if parents and isinstance(parents[0], BasePageElement):
             res = []
@@ -136,8 +143,13 @@ class BasePageElement:
         return self
 
     def __call__(self, renew=False) -> WebElement:
-        self.result = self.base_page.get_cache(self.locator, parent=self._get_parent(self.base_page), renew=renew)
+        self.result = self.base_page.get_cache(
+            self.locator, parent=self._get_parent(self.base_page, renew=renew), renew=renew)
         return self.result
+
+    def assert_invisible(self, renew=False):
+        self.base_page.verify_not_visible_element(
+            self.locator, parent=self._get_parent(self.base_page, renew=renew))
 
     def _get_parent(self, base_page: BasePage, renew=False) -> WebElement:
         parent = None
@@ -151,6 +163,94 @@ class BasePageElements(BasePageElement):
     def __call__(self, renew=False) -> list[WebElement]:
         self.result = self.base_page.get_cache_all(self.locator, parent=self._get_parent(self.base_page), renew=renew)
         return self.result
+
+
+class SimplePage:
+
+    def __init__(self, path: str, title: str, https=False):
+        self.path = path
+        self.title = title
+        self.https = https
+        self.instance: Optional['Pages'] = None
+        self.owner: Optional['Pages'] = None
+
+    def __get__(self, instance: 'Pages', owner: type['Pages']):
+        assert instance, 'Need instance of Pages to call'
+        self.instance = instance
+        self.owner = owner
+        return self
+
+    def __call__(self):
+        return self.instance(self.path, self.title, https=self.https)
+
+    def assertion(self):
+        self.instance.assert_page(self.path, self.title, https=self.https)
+
+
+class Pages(Browser.WithBrowser):
+    p_main = SimplePage('index.php?route=common/home', 'Your Store')
+    p_contacts = SimplePage('index.php?route=information/contact', 'Contact Us')
+    p_cart = SimplePage('index.php?route=checkout/cart', 'Shopping Cart')
+    p_search = SimplePage('index.php?route=product/search', 'Search')
+    p_admin = SimplePage('admin/index.php?route=common/login', 'Administration', https=True)
+    p_dashboard = SimplePage('admin/index.php?route=common/dashboard', 'Dashboard', https=True)
+    p_register = SimplePage('index.php?route=account/register', 'Register Account', https=True)
+    p_success_register = SimplePage('index.php?route=account/success', 'Your Account Has Been Created!', https=True)
+
+    PARAMS = {
+        'catalogue': [
+            ('desktops', 'Desktops'),
+            ('laptop-notebook', 'Laptops & Notebooks'),
+            ('component', 'Components')
+        ],
+    }
+
+    # PARAMS_WITH_CURRENCY = PARAMS_MAIN + PARAMS_CATALOGUE + []
+    # PARAMS_ALL = PARAMS_MAIN + PARAMS_CATALOGUE + []
+
+    def __init__(self, browser, url_main, url_main_https=None):
+        self.url_main = url_main
+        self.url_main_https = url_main_https
+        self._browser = browser
+
+    @property
+    def params_all(self):
+        for k, v in self.PARAMS:
+            if isinstance(v, list):
+                yield from iter(v)
+            else:
+                yield v
+
+    @property
+    def browser(self) -> WebDriver:
+        return self._browser
+
+    def __call__(self, path, title, https=False) -> WebDriver:
+        url = self.get_url(path, https=https)
+        if not self.check_url(url):
+            self.browser.get(url)
+            Wait(self.browser).until(EC.title_contains(title))
+
+        return self.browser
+
+    def random(self, params: list[tuple[str, str]] = None) -> WebDriver:
+        return self(*random.choice(params or self.params_all))
+
+    def assert_page(self, path: str, title: str, https=False):
+        assert str.startswith(self.browser.current_url, self.get_url(path, https=https)), 'Incorrect URL'
+        self.assert_title(title)
+
+    def assert_title(self, title: str):
+        Wait(self.browser).until(EC.title_contains(title))
+
+    def check_path(self, path: str, https=False) -> bool:
+        return self.check_url(self.get_url(path, https=https))
+
+    def check_url(self, url: str) -> bool:
+        return self.browser.current_url == url
+
+    def get_url(self, path, https=False) -> str:
+        return f'{self.url_main_https if https else self.url_main}/{path}'
 
 
 if __name__ == '__main__':

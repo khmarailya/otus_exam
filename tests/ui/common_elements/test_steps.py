@@ -8,6 +8,7 @@ from pytest_bdd import given, when, then, parsers, scenarios, scenario
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
+from libs.config import CONFIG
 from libs.element.Footer import Footer
 from libs.element.Header import Header
 from libs.element.Menu import Menu
@@ -16,10 +17,6 @@ from libs.xallure import Str, XAllure
 
 CURRENT_PAGE: tuple[Optional[str], Optional[WebDriver]] = (None, None)
 
-
-@pytest.fixture()
-def current_page() -> WebDriver:
-    pass
 
 
 @pytest.fixture()
@@ -51,75 +48,19 @@ scenarios('features')
 XAllure.scenarios()
 
 
-#
-# class TestCurrency(metaclass=XAllure.meta):
-#
-#     @scenario('features/currency.feature', 'Check currency exists')
-#     def test_1(self):
-#         pass
-#
-#     @scenario('features/currency.feature', 'Check currency list')
-#     def test_2(self):
-#         pass
-#
-#     @scenario('features/currency.feature', 'Check currency change')
-#     def test_3(self):
-#         pass
-#
-#
-# class TestCart(metaclass=XAllure.meta):
-#
-#     @scenario('features/cart.feature', 'Check Cart exists')
-#     def test_1(self):
-#         pass
-#
-#     @scenario('features/cart.feature', 'Check empty Cart message')
-#     def test_2(self):
-#         pass
-#
-#     @scenario('features/cart.feature', 'Check go to Cart page')
-#     def test_3(self):
-#         pass
-#
-#
-# class TestContacts(metaclass=XAllure.meta):
-#
-#     @scenario('features/search.feature', 'Check Search exists')
-#     def test_1(self):
-#         pass
-
-
 @given('I go to Main page', target_fixture='current_page')
-@XAllure.step
-def _(request, pages):
-    return pages.pr_main
-
-
 @given('I go to Cart page', target_fixture='current_page')
-@XAllure.step
-def _(request, pages):
-    return pages(*pages.PARAMS['cart'])
-
-
 @given('I go to Contacts page', target_fixture='current_page')
 @XAllure.step
 def _(request, pages):
-    return pages(*pages.PARAMS['contacts'])
-
-
-@given(parsers.parse('I go to page with Currency - "{page}"'))
-@XAllure.step
-def _(request, pages, page: str):
-    global CURRENT_PAGE
-
-    if (page := page.lower()) == CURRENT_PAGE[0]:
-        return
-    elif params := pages.PARAMS.get(page):
-        res = pages.random(params)
+    if 'Main' in (s := CONFIG.get_current_step(request).name):
+        return pages.p_main()
+    elif 'Cart' in s:
+        return pages.p_cart()
+    elif 'Contacts' in s:
+        return pages.p_contacts()
     else:
-        raise AssertionError(f'{page} - wrong page key')
-
-    CURRENT_PAGE = page, res
+        raise AssertionError(f'Something is wrong with step name "{s}"')
 
 
 @then(parsers.parse('I see Currency in top'))
@@ -206,23 +147,13 @@ def _(request, top, text):
 def _(request, top, ls: str):
     expected_btn_name_list = Str.strip_split(ls, ',')
     btn_name_list = list(btn.text for btn in top.CURRENCY_BTN())
-    assert sorted(btn_name_list) == sorted(expected_btn_name_list), ''
+    assert sorted(btn_name_list) == sorted(expected_btn_name_list), 'Wrong Currency list'
 
 
 @then(parsers.parse('Currency has sign "{sign}"'))
 @XAllure.step
 def _(request, top, sign):
     assert top.CURRENCY_TITLE().text == sign, ''
-
-
-# @then(parsers.parse(s := 'I can choose currencies "{currencies}" and see signs "{signs}"'))
-# @XAllure.step(s)
-# def then_impl(request, top, currencies: str, signs: str):
-#     for currency, sign in zip(*Str.strip_splits(currencies, signs, sep=',')):
-#         with allure.step(f'I choose currency "{currency}" and see sign "{sign}"'):
-#             when_open_currency_menu(request, top)
-#             when_choose_currency(request, top, currency)
-#             then_currency_has_sign(request, top, sign)
 
 
 @when('Cart is empty')
@@ -279,28 +210,22 @@ def _(request, header, msg):
     header.check_cart_menu_msg(msg)
 
 
+@then(parsers.parse('I go to Main page'))
 @then(parsers.parse('I go to Cart page'))
-@XAllure.step
-def _(request, pages):
-    pages.check_page(*pages.PARAMS['cart'])
-
-
 @then(parsers.parse('I go to Contacts page'))
-@XAllure.step
-def _(request, pages):
-    pages.check_page(*pages.PARAMS['contacts'])
-
-
 @then(parsers.parse('I go to Search page'))
 @XAllure.step
 def _(request, pages):
-    pages.check_page(*pages.PARAMS['search'])
-
-
-@then(parsers.parse('I go to Main page'))
-@XAllure.step
-def _(request, pages):
-    pages.check_page(*pages.PARAMS['main'])
+    if 'Main' in (s := CONFIG.get_current_step(request).name):
+        pages.p_main.assertion()
+    elif 'Cart' in s:
+        pages.p_cart.assertion()
+    elif 'Contacts' in s:
+        pages.p_contacts.assertion()
+    elif 'Search' in s:
+        pages.p_search.assertion()
+    else:
+        raise AssertionError(f'Something is wrong with step name "{s}"')
 
 
 @then(parsers.parse('I go to Catalogue page "{title}"'))
@@ -308,4 +233,9 @@ def _(request, pages):
 def _(request, pages, title):
     if not (res := list(filter(lambda x: x[1] == title, pages.PARAMS['catalogue']))):
         raise AssertionError(f'Can\'t find page {title}')
-    pages.check_page(*res[0])
+    pages.assert_page(*res[0])
+
+
+if __name__ == '__main__':
+    # for launching all local scenarios
+    pass

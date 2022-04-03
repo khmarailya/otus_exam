@@ -38,6 +38,7 @@ class CSS(Locator):
     child: 'CSS' = Locator._css(' > ')
     header: 'CSS' = Locator._css('header')
     descendant: 'CSS' = Locator._css(' ')
+    neighbor: 'CSS' = Locator._css(' + ')
     a: 'CSS' = Locator._css('a')
     ul: 'CSS' = Locator._css('ul')
     input: 'CSS' = Locator._css('input')

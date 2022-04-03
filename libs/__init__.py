@@ -3,18 +3,6 @@ import string
 from typing import Iterable, Iterator
 
 
-def random_string(length=10):
-    return "".join([random.choice(string.ascii_letters) for _ in range(length)])
-
-
-def random_phone():
-    return "".join([random.choice(string.digits) for _ in range(10)])
-
-
-def random_email():
-    return random_string() + "@" + random_string(5) + "." + random.choice(["com", "ua", "org", "ru"])
-
-
 class XHelper:
 
     @staticmethod
@@ -41,6 +29,18 @@ class XHelper:
     def iter(*args: Iterable):
         for i in args:
             yield from iter(i)
+
+    @classmethod
+    def random_string(cls, length=10):
+        return "".join([random.choice(string.ascii_letters) for _ in range(length)])
+
+    @staticmethod
+    def random_phone():
+        return "".join([random.choice(string.digits) for _ in range(10)])
+
+    @classmethod
+    def random_email(cls):
+        return cls.random_string() + "@" + cls.random_string(5) + "." + random.choice(["com", "ua", "org", "ru"])
 
 
 class Str:

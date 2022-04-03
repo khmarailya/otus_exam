@@ -1,72 +1,38 @@
-from selenium.webdriver.support import expected_conditions as EC
+from typing import Iterator
 
-from libs.Wait import Wait
 from libs.locators import CSS, XPATH
-from libs.page_object.BasePage import BasePage, screen_step
+from libs.page_object.BasePage import BasePage, BasePageElement
+
+
+def _get_common_input(parent, *keys) -> Iterator[BasePageElement]:
+    for key in keys:
+        yield BasePageElement(XPATH().label.for_(key).res, parent)
+        yield BasePageElement(CSS().input.id(key).res, parent)
+        yield BasePageElement(CSS().input.id(key).neighbor.div.classes('text-danger').res, parent)
 
 
 class RegisterPage(BasePage):
-    CONTENT = CSS().id('content').res
-    AGREE = CSS().input.attr('name', 'agree').res
-    CONTINUE = CSS().input.attr('value', 'Continue').res
+    CONTENT = BasePageElement(
+        CSS().id('content').res)
+    AGREE = BasePageElement(
+        CSS().input.attr('name', 'agree').res, CONTENT)
+    CONTINUE = BasePageElement(
+        CSS().input.attr('value', 'Continue').res, CONTENT)
 
-    ALL_INPUTS = {
-        key: (XPATH().label.for_(val).res, CSS().input.id(val).res)
-        for key, val in (
-            ('firstname', 'input-firstname'),
-            ('lastname', 'input-lastname'),
-            ('email', 'input-email'),
-            ('telephone', 'input-telephone'),
-            ('password', 'input-password'),
-            ('confirm', 'input-confirm')
-        )
-    }
-
-    @BasePage.cache
-    def _content(self, **kwargs):
-        return self.verify_visible_element(self.CONTENT)
-
-    def _set_usual_input(self, key: str, val: str):
-        label, input_ = self.ALL_INPUTS.get(key)
-        parent = self._content()
-        self.verify_visible_element(label, parent=parent)
-        self._send_keys(self.verify_visible_element(input_, parent=parent), val)
-        return self
-
-    @screen_step('Set firstname "{val}"')
-    def set_firstname(self, val: str):
-        return self._set_usual_input('firstname', val)
-
-    @screen_step('Set lastname "{val}"')
-    def set_lastname(self, val: str):
-        return self._set_usual_input('lastname', val)
-
-    @screen_step('Set email "{val}"')
-    def set_email(self, val: str):
-        return self._set_usual_input('email', val)
-
-    @screen_step('Set telephone "{val}"')
-    def set_telephone(self, val: str):
-        return self._set_usual_input('telephone', val)
-
-    @screen_step('Set password "{val}"')
-    def set_password(self, val: str):
-        return self._set_usual_input('password', val)
-
-    @screen_step('Confirm')
-    def set_confirm(self, val: str):
-        return self._set_usual_input('confirm', val)
-
-    @screen_step('Agree')
-    def agree(self):
-        self.verify_visible_element(self.AGREE, parent=self._content()).click()
-        return self
-
-    @screen_step('Continue')
-    def continue_(self):
-        self.verify_visible_element(self.CONTINUE, parent=self._content()).click()
-        Wait(self._driver).until(EC.title_is('Your Account Has Been Created!'))
-        return self
+    INPUT_LABEL_FIRSTNAME, INPUT_FIRSTNAME, INPUT_FIRSTNAME_ALERT, \
+        INPUT_LABEL_LASTNAME, INPUT_LASTNAME, INPUT_LASTNAME_ALERT, \
+        INPUT_LABEL_EMAIL, INPUT_EMAIL, INPUT_EMAIL_ALERT, \
+        INPUT_LABEL_TELEPHONE, INPUT_TELEPHONE, INPUT_TELEPHONE_ALERT, \
+        INPUT_LABEL_PASSWORD, INPUT_PASSWORD, INPUT_PASSWORD_ALERT, \
+        INPUT_LABEL_CONFIRM, INPUT_CONFIRM, INPUT_CONFIRM_ALERT = tuple(_get_common_input(
+            CONTENT,
+            'input-firstname',
+            'input-lastname',
+            'input-email',
+            'input-telephone',
+            'input-password',
+            'input-confirm',
+        ))
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ from _pytest.fixtures import FixtureRequest
 from pytest_bdd.parser import Step, Feature, ScenarioTemplate
 
 from libs import XHelper, Str
+from libs.config import CONFIG
 
 
 class XAllure:
@@ -13,7 +14,7 @@ class XAllure:
 
     @staticmethod
     def get_step_with_type(request: FixtureRequest) -> str:
-        step: Step = getattr(request, 'global_curr_step')
+        step: Step = getattr(request, CONFIG.__GLOBAL_CURR_STEP__)
         return f'{step.keyword} {step.name}'
 
     @classmethod
@@ -74,9 +75,10 @@ class XAllure:
             finally:
                 from conftest import CONFIG
                 if err or CONFIG.ALWAYS_SCREEN:
-                    browsers: list[CONFIG.WithBrowser] = \
+                    from libs.browser import Browser
+                    browsers: list[Browser.WithBrowser] = \
                         list(filter(
-                            lambda x: isinstance(x, CONFIG.WithBrowser),
+                            lambda x: isinstance(x, Browser.WithBrowser),
                             XHelper.iter(args, kwargs.values())))
 
                     browser = browsers[0].browser if browsers else None
@@ -140,3 +142,22 @@ class XAllure:
 
         for test_name, v in filter(lambda x: hasattr(x[1], "__scenario__"), caller_locals.items()):
             caller_locals[test_name] = cls.scenario(v)
+
+    @staticmethod
+    def add_param(key, value):
+        return f"""
+            <parameter>
+                <key>{key}</key>
+                <value>{value}</value>
+            </parameter>
+        """
+
+    @classmethod
+    def add_environment(cls):
+        with open(f'{CONFIG.__ALLURE_RESULTS__}/environment.xml', 'w+') as file:
+            s = '<environment>'
+            s += cls.add_param('Browser', CONFIG.BROWSER())
+            s += cls.add_param('Browser.Version', version) if (version := CONFIG.BROWSER_VERSION()) else ''
+            s += cls.add_param('Executor', executor) if (executor := CONFIG.EXECUTOR()) else ''
+            s += '</environment>'
+            file.write(s)
