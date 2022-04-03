@@ -1,4 +1,4 @@
-@ui @auth @auth_
+@ui @auth
 Feature: Auth / Check User Register
   I want to check Register of new User on Register page
 
