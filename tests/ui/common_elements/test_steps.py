@@ -4,7 +4,7 @@
 from typing import Optional
 
 import pytest
-from pytest_bdd import given, when, then, parsers, scenarios, scenario
+from pytest_bdd import given, when, then, parsers, scenarios
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -16,7 +16,6 @@ from libs.element.Top import Top
 from libs.xallure import Str, XAllure
 
 CURRENT_PAGE: tuple[Optional[str], Optional[WebDriver]] = (None, None)
-
 
 
 @pytest.fixture()

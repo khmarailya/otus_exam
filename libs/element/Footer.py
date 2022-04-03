@@ -1,7 +1,5 @@
-from selenium.webdriver.remote.webelement import WebElement
-
 from libs.locators import CSS, XPATH
-from libs.page_object.BasePage import BasePage, BasePageElement, BasePageElements
+from libs.page_object.BasePage import BasePage, BasePageElement
 
 
 class Footer(BasePage):

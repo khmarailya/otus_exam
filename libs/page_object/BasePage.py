@@ -1,9 +1,8 @@
 import logging
 import random
-from typing import Optional, List, Union, Callable
+from typing import Optional, List, Union
 
 import allure
-from multipledispatch import dispatch
 from selenium.webdriver.android.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
@@ -88,7 +87,8 @@ class BasePage(Browser.WithBrowser):
     def verify_not_visible_element(self, locator: tuple, parent=None):
         self.logger.info(f'{self} => Verifying visible element: {locator}')
         self.attach_locator(locator)
-        Wait(parent or self.driver or self._driver, timeout=0, frequency=0).until(EC.invisibility_of_element_located(locator))
+        Wait(parent or self.driver or self._driver, timeout=0, frequency=0).until(
+            EC.invisibility_of_element_located(locator))
 
     @XAllure.step_screen('I find Web elements')
     def verify_visible_elements(self, locator: tuple, parent=None) -> List[WebElement]:

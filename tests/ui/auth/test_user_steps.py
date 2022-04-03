@@ -68,7 +68,7 @@ def _(request, register_page):
 @when(parsers.parse('I set password with "{val}" chars'))
 @XAllure.step
 def _(request, register_page, val):
-    if 'chars' in (s := CONFIG.get_current_step(request).name):
+    if 'chars' in CONFIG.get_current_step(request).name:
         val = XHelper.random_string(int(val))
 
     inp = register_page.INPUT_PASSWORD()

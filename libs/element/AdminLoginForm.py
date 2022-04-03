@@ -2,7 +2,6 @@ import allure
 
 from libs.locators import XPATH, CSS
 from libs.page_object.BasePage import BasePage, BasePageElement
-from libs.xallure import XAllure
 
 
 class AdminLoginForm(BasePage):
