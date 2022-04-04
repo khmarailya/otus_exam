@@ -53,6 +53,8 @@ _jenkins_
 
 Добавить проект
 
+- шаг0 (задать параметризацию - см. параметры Dockerfile и шаг2)
+
 - шаг1 (стягивание)
 
 
@@ -61,12 +63,22 @@ _jenkins_
 - шаг 2 (запуск, при необходимости задайте переменные окружения - см. Dockerfile)
 
 
-     if [ ! -d allure-results/ ]; then
+    if [ ! -d allure-results/ ]; then
 	/bin/mkdir -p /var/jenkins_home/workspace/otus_exam/allure-results 
     fi
     /bin/chmod -R 777 /var/jenkins_home/workspace/otus_exam/allure-results
-    docker build .
-    docker run --rm -v "/var/jenkins_home/workspace/otus_exam/allure-results:/opt/app/allure-results" -e MARKS="ui" otus_exam
+    docker build -t otus_exam .
+    docker run --rm -v "/var/jenkins_home/workspace/otus_exam/allure-results:/opt/app/allure-results" \
+        -e BROWSER=${BROWSER} \
+        -e BVERSION=${BVERSION} \
+        -e URL=${URL} \
+        -e URL_HTTPS=${URL_HTTPS} \
+        -e EXECUTOR=${EXECUTOR} \
+        -e EXECUTOR_PORT=${EXECUTOR_PORT} \
+        -e EXECUTOR_PORT_HUB=${EXECUTOR_PORT_HUB} \
+        -e PARALLELS=${PARALLELS} \
+        -e MARKS=${MARKS} \
+        otus_exam
     ls -la
     
     
@@ -81,7 +93,7 @@ _Проблема_ opencart по каким-то причинам не прин�
 (задать в yml как volume или копировать через command нельзя из-за внутренних особенностей образов)
 - для запуска из браузера 
   - поменять для HTTP_SERVER и HTTP_CATALOG: к localhost добавить порт (если нужно, по умолчанию 8080)
-  - поменять для HTTPS_SERVER и HTTPS_CATALOG: к localhost добавить порт (если нужноб по умолчанию стандартный)
+  - поменять для HTTPS_SERVER и HTTPS_CATALOG: к localhost добавить порт (если нужно, по умолчанию стандартный)
 - для запуска из selenoid 
   - _docker network inspect bridge_ 
     - посмотреть ip сети "IPAM":"Config":"Gateway"  
